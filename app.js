@@ -5,17 +5,35 @@ const { buildSchema } = require('graphql');
 
 const app = express();
 
+const tasks = [];
+
 app.use(bodyParser.json());
 
 app.use(
   '/api',
   graphqlHttp({
     schema: buildSchema(`
+      type Task {
+        _id: ID!
+        name: String!
+        description: String
+        date: String
+        hour: String
+        place: String
+      }
+      input TaskInput {
+        name: String!
+        description: String
+        date: String
+        hour: String
+        place: String
+      }
+
       type RootQuery {
-        tasks: [String!]!
+        tasks: [Task!]!
       }
       type RootMutation {
-        createTask(name: String): String
+        createTask(taskInput: TaskInput): Task
       }
       schema {
         query: RootQuery
@@ -24,11 +42,19 @@ app.use(
     `),
     rootValue: {
       tasks: () => {
-        return ['Depertarse', 'Hacer ejercicios', 'Tiempo de código'];
+        return tasks;
       },
       createTask: (args) => {
-        const name = args.name;
-        return name;
+        const task = {
+          _id: Math.random().toString(),
+          name: args.taskInput.name,
+          description: args.taskInput.description,
+          date: args.taskInput.date || new Date().toISOString(),
+          hour: args.taskInput.hour,
+          place: args.taskInput.place,
+        };
+        tasks.push(task)
+        return task;
       }
     },
     graphiql: true
